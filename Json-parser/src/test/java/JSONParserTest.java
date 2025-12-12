@@ -1,51 +1,58 @@
-import org.example.JSONParseException;
-import org.example.JSONParser;
-import org.junit.jupiter.api.BeforeEach;
+package org.example;
+
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-/**
- * Unit tests for JSONParser.
- */
 class JSONParserTest {
 
-    private JSONParser parser;
+    private final JSONParser parser = new JSONParser();
 
-    @BeforeEach
-    void setUp() {
-        parser = new JSONParser();
+    @Test
+    void testParseValidEmptyObject() throws JSONParseException {
+        String json = "{}";
+        Object result = parser.parse(json);
+        assertEquals("{}", result);
     }
 
     @Test
-    void testParseNullThrowsException() {
-        assertThrows(JSONParseException.class, () -> {
-            parser.parse(null);
-        });
+    void testParseValidEmptyObjectWithWhitespace() throws JSONParseException {
+        String json = "  {  }  ";
+        Object result = parser.parse(json);
+        assertEquals("{}", result);
     }
 
     @Test
-    void testParseEmptyStringThrowsException() {
-        assertThrows(JSONParseException.class, () -> {
-            parser.parse("");
-        });
+    void testParseNullJson() {
+        assertThrows(JSONParseException.class, () -> parser.parse(null));
     }
 
     @Test
-    void testParseWhitespaceOnlyThrowsException() {
-        assertThrows(JSONParseException.class, () -> {
-            parser.parse("   ");
-        });
+    void testParseEmptyString() {
+        assertThrows(JSONParseException.class, () -> parser.parse(""));
     }
 
     @Test
-    void testIsValidReturnsFalseForNull() {
-        assertFalse(parser.isValid(null));
+    void testParseMissingRightBrace() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{"));
     }
 
     @Test
-    void testIsValidReturnsFalseForEmptyString() {
-        assertFalse(parser.isValid(""));
+    void testParseMissingLeftBrace() {
+        assertThrows(JSONParseException.class, () -> parser.parse("}"));
+    }
+    
+    @Test
+    void testParseExtraTokens() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{} extra"));
+    }
+
+    @Test
+    void testIsValidValidJson() {
+        assertTrue(parser.isValid("{}"));
+    }
+
+    @Test
+    void testIsValidInvalidJson() {
+        assertFalse(parser.isValid("{"));
     }
 }
