@@ -2,7 +2,7 @@ package org.example;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 /**
  * Main entry point for the JSON Parser application.
@@ -49,7 +49,7 @@ public class Main {
     }
 
     private static String readFile(String filePath) throws IOException {
-        return new String(Files.readAllBytes(Paths.get(filePath)));
+        return new String(Files.readAllBytes(Path.of(filePath)));
     }
 }
 

@@ -82,7 +82,7 @@ public class JSONParser {
             throw new JSONParseException("JSON string cannot be empty");
         }
 
-        Token first = tokens.get(0);
+        Token first = tokens.getFirst();
         if (first.type == TokenType.LEFT_BRACE) {
             if (tokens.size() > 1 && tokens.get(1).type == TokenType.RIGHT_BRACE) {
                 if (tokens.size() > 2) {
