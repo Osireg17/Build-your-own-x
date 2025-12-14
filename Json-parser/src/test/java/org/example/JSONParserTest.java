@@ -1,7 +1,10 @@
 package org.example;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 class JSONParserTest {
 
@@ -40,7 +43,7 @@ class JSONParserTest {
     void testParseMissingLeftBrace() {
         assertThrows(JSONParseException.class, () -> parser.parse("}"));
     }
-    
+
     @Test
     void testParseExtraTokens() {
         assertThrows(JSONParseException.class, () -> parser.parse("{} extra"));
