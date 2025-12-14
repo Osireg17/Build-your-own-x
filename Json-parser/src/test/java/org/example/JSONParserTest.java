@@ -1,5 +1,6 @@
 package org.example;
 
+import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,14 +15,33 @@ class JSONParserTest {
     void testParseValidEmptyObject() throws JSONParseException {
         String json = "{}";
         Object result = parser.parse(json);
-        assertEquals("{}", result);
+        assertTrue(result instanceof Map);
+        assertEquals(Map.of(), result);
     }
 
     @Test
     void testParseValidEmptyObjectWithWhitespace() throws JSONParseException {
         String json = "  {  }  ";
         Object result = parser.parse(json);
-        assertEquals("{}", result);
+        assertTrue(result instanceof Map);
+        assertEquals(Map.of(), result);
+    }
+
+    @Test
+    void testParseSimpleObject() throws JSONParseException {
+        String json = "{\"key\": \"value\"}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        assertEquals(Map.of("key", "value"), result);
+    }
+
+    @Test
+    void testParseMultipleKeys() throws JSONParseException {
+        String json = "{\"key\": \"value\", \"key2\": \"value\"}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        Map<String, Object> expected = Map.of("key", "value", "key2", "value");
+        assertEquals(expected, result);
     }
 
     @Test
@@ -47,6 +67,26 @@ class JSONParserTest {
     @Test
     void testParseExtraTokens() {
         assertThrows(JSONParseException.class, () -> parser.parse("{} extra"));
+    }
+
+    @Test
+    void testParseInvalidTrailingComma() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{\"key\": \"value\",}"));
+    }
+
+    @Test
+    void testParseInvalidUnquotedKey() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{key: \"value\"}"));
+    }
+
+    @Test
+    void testParseInvalidMissingValue() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{\"key\":}"));
+    }
+
+    @Test
+    void testParseInvalidMissingColon() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{\"key\" \"value\"}"));
     }
 
     @Test

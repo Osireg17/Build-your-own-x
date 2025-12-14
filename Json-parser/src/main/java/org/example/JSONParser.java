@@ -1,29 +1,39 @@
 package org.example;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JSONParser {
 
     private enum TokenType {
         LEFT_BRACE,
         RIGHT_BRACE,
-        // We will add more types as we progress
+        STRING,
+        COLON,
+        COMMA
     }
 
     private static class Token {
 
         final TokenType type;
         final int position;
+        final String value;
 
         Token(TokenType type, int position) {
+            this(type, position, null);
+        }
+
+        Token(TokenType type, int position, String value) {
             this.type = type;
             this.position = position;
+            this.value = value;
         }
 
         @Override
         public String toString() {
-            return type.toString();
+            return type + (value != null ? "(" + value + ")" : "");
         }
     }
 
@@ -51,6 +61,17 @@ public class JSONParser {
                         tokens.add(new Token(TokenType.RIGHT_BRACE, pos));
                         pos++;
                     }
+                    case ':' -> {
+                        tokens.add(new Token(TokenType.COLON, pos));
+                        pos++;
+                    }
+                    case ',' -> {
+                        tokens.add(new Token(TokenType.COMMA, pos));
+                        pos++;
+                    }
+                    case '"' -> {
+                        tokens.add(readString());
+                    }
                     case ' ', '\t', '\n', '\r' ->
                         pos++; // Skip whitespace
                     default ->
@@ -58,6 +79,22 @@ public class JSONParser {
                 }
             }
             return tokens;
+        }
+
+        private Token readString() throws JSONParseException {
+            int start = pos;
+            pos++; // Skip opening quote
+            StringBuilder sb = new StringBuilder();
+            while (pos < length) {
+                char current = input.charAt(pos);
+                if (current == '"') {
+                    pos++; // Skip closing quote
+                    return new Token(TokenType.STRING, start, sb.toString());
+                }
+                sb.append(current);
+                pos++;
+            }
+            throw new JSONParseException("Unterminated string starting at position " + start);
         }
     }
 
@@ -81,18 +118,68 @@ public class JSONParser {
         }
 
         Token first = tokens.get(0);
-        if (first.type == TokenType.LEFT_BRACE) {
-            if (tokens.size() > 1 && tokens.get(1).type == TokenType.RIGHT_BRACE) {
-                if (tokens.size() > 2) {
-                    throw new JSONParseException("Unexpected tokens after JSON object");
-                }
-                return "{}"; // Valid empty object
-            } else {
-                throw new JSONParseException("Expected '}'");
-            }
-        } else {
+        if (first.type != TokenType.LEFT_BRACE) {
             throw new JSONParseException("Expected '{'");
         }
+
+        Map<String, Object> object = new HashMap<>();
+        int index = 1;
+
+        if (index < tokens.size() && tokens.get(index).type == TokenType.RIGHT_BRACE) {
+            if (index + 1 < tokens.size()) {
+                 throw new JSONParseException("Unexpected tokens after JSON object");
+            }
+            return object; // Empty object
+        }
+
+        while (index < tokens.size()) {
+            Token token = tokens.get(index);
+
+            if (token.type != TokenType.STRING) {
+                throw new JSONParseException("Expected string key at position " + token.position);
+            }
+            String key = token.value;
+            index++;
+
+            if (index >= tokens.size() || tokens.get(index).type != TokenType.COLON) {
+                 throw new JSONParseException("Expected ':' after key at position " + (index < tokens.size() ? tokens.get(index).position : "end"));
+            }
+            index++;
+
+            if (index >= tokens.size()) {
+                throw new JSONParseException("Expected value at position " + "end");
+            }
+            Token valueToken = tokens.get(index);
+            if (valueToken.type != TokenType.STRING) {
+                 throw new JSONParseException("Expected string value at position " + valueToken.position);
+            }
+            object.put(key, valueToken.value);
+            index++;
+
+            if (index >= tokens.size()) {
+                 throw new JSONParseException("Expected '}' or ',' at position " + "end");
+            }
+
+            Token next = tokens.get(index);
+            if (next.type == TokenType.RIGHT_BRACE) {
+                index++;
+                if (index < tokens.size()) {
+                     throw new JSONParseException("Unexpected tokens after JSON object");
+                }
+                return object;
+            } else if (next.type == TokenType.COMMA) {
+                index++;
+                // Continue loop for next key-value pair
+                // Check for trailing comma
+                if (index < tokens.size() && tokens.get(index).type == TokenType.RIGHT_BRACE) {
+                    throw new JSONParseException("Trailing comma at position " + next.position);
+                }
+            } else {
+                 throw new JSONParseException("Expected '}' or ',' at position " + next.position);
+            }
+        }
+
+        throw new JSONParseException("Unexpected end of input");
     }
 
     /**
