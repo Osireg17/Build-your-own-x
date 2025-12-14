@@ -11,6 +11,10 @@ public class JSONParser {
         LEFT_BRACE,
         RIGHT_BRACE,
         STRING,
+        NUMBER,
+        TRUE,
+        FALSE,
+        NULL,
         COLON,
         COMMA
     }
@@ -72,10 +76,24 @@ public class JSONParser {
                     case '"' -> {
                         tokens.add(readString());
                     }
+                    case 't' -> {
+                        tokens.add(readTrue());
+                    }
+                    case 'f' -> {
+                        tokens.add(readFalse());
+                    }
+                    case 'n' -> {
+                        tokens.add(readNull());
+                    }
                     case ' ', '\t', '\n', '\r' ->
                         pos++; // Skip whitespace
-                    default ->
-                        throw new JSONParseException("Unexpected character '" + current + "' at position " + pos);
+                    default -> {
+                        if (Character.isDigit(current) || current == '-') {
+                            tokens.add(readNumber());
+                        } else {
+                            throw new JSONParseException("Unexpected character '" + current + "' at position " + pos);
+                        }
+                    }
                 }
             }
             return tokens;
@@ -95,6 +113,73 @@ public class JSONParser {
                 pos++;
             }
             throw new JSONParseException("Unterminated string starting at position " + start);
+        }
+
+        private Token readNumber() throws JSONParseException {
+            int start = pos;
+            if (input.charAt(pos) == '-') {
+                pos++;
+            }
+            if (pos >= length) {
+                 throw new JSONParseException("Unexpected end of input inside number");
+            }
+            if (!Character.isDigit(input.charAt(pos))) {
+                 throw new JSONParseException("Expected digit at position " + pos);
+            }
+            while (pos < length && Character.isDigit(input.charAt(pos))) {
+                pos++;
+            }
+            // Optional fractional part
+            if (pos < length && input.charAt(pos) == '.') {
+                pos++;
+                if (pos >= length || !Character.isDigit(input.charAt(pos))) {
+                     throw new JSONParseException("Expected digit after decimal point at position " + pos);
+                }
+                while (pos < length && Character.isDigit(input.charAt(pos))) {
+                    pos++;
+                }
+            }
+            // Optional exponent part
+            if (pos < length && (input.charAt(pos) == 'e' || input.charAt(pos) == 'E')) {
+                pos++;
+                if (pos < length && (input.charAt(pos) == '+' || input.charAt(pos) == '-')) {
+                    pos++;
+                }
+                if (pos >= length || !Character.isDigit(input.charAt(pos))) {
+                     throw new JSONParseException("Expected digit after exponent indicator at position " + pos);
+                }
+                while (pos < length && Character.isDigit(input.charAt(pos))) {
+                    pos++;
+                }
+            }
+            return new Token(TokenType.NUMBER, start, input.substring(start, pos));
+        }
+
+        private Token readTrue() throws JSONParseException {
+            int start = pos;
+            if (input.startsWith("true", pos)) {
+                pos += 4;
+                return new Token(TokenType.TRUE, start, "true");
+            }
+            throw new JSONParseException("Unexpected token starting with 't' at position " + start);
+        }
+
+        private Token readFalse() throws JSONParseException {
+            int start = pos;
+            if (input.startsWith("false", pos)) {
+                pos += 5;
+                return new Token(TokenType.FALSE, start, "false");
+            }
+            throw new JSONParseException("Unexpected token starting with 'f' at position " + start);
+        }
+
+        private Token readNull() throws JSONParseException {
+            int start = pos;
+            if (input.startsWith("null", pos)) {
+                pos += 4;
+                return new Token(TokenType.NULL, start, "null");
+            }
+            throw new JSONParseException("Unexpected token starting with 'n' at position " + start);
         }
     }
 
@@ -150,10 +235,26 @@ public class JSONParser {
                 throw new JSONParseException("Expected value at position " + "end");
             }
             Token valueToken = tokens.get(index);
-            if (valueToken.type != TokenType.STRING) {
-                 throw new JSONParseException("Expected string value at position " + valueToken.position);
+            Object value;
+            switch (valueToken.type) {
+                case STRING -> value = valueToken.value;
+                case NUMBER -> {
+                    try {
+                        value = Integer.parseInt(valueToken.value);
+                    } catch (NumberFormatException e) {
+                        try {
+                             value = Long.parseLong(valueToken.value);
+                        } catch (NumberFormatException e2) {
+                            value = Double.parseDouble(valueToken.value);
+                        }
+                    }
+                }
+                case TRUE -> value = true;
+                case FALSE -> value = false;
+                case NULL -> value = null;
+                default -> throw new JSONParseException("Expected value at position " + valueToken.position);
             }
-            object.put(key, valueToken.value);
+            object.put(key, value);
             index++;
 
             if (index >= tokens.size()) {

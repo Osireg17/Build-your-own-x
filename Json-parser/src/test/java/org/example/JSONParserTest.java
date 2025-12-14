@@ -45,6 +45,90 @@ class JSONParserTest {
     }
 
     @Test
+    void testParseBooleanTrue() throws JSONParseException {
+        String json = "{\"key\": true}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        assertEquals(Map.of("key", true), result);
+    }
+
+    @Test
+    void testParseBooleanFalse() throws JSONParseException {
+        String json = "{\"key\": false}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        assertEquals(Map.of("key", false), result);
+    }
+
+    @Test
+    void testParseNull() throws JSONParseException {
+        String json = "{\"key\": null}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        Map<String, Object> map = (Map<String, Object>) result;
+        assertTrue(map.containsKey("key"));
+        assertEquals(null, map.get("key"));
+    }
+
+    @Test
+    void testParseInteger() throws JSONParseException {
+        String json = "{\"key\": 123}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        assertEquals(Map.of("key", 123), result);
+    }
+
+    @Test
+    void testParseDouble() throws JSONParseException {
+        String json = "{\"key\": 12.34}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        assertEquals(Map.of("key", 12.34), result);
+    }
+
+    @Test
+    void testParseNegativeNumber() throws JSONParseException {
+        String json = "{\"key\": -10}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        assertEquals(Map.of("key", -10), result);
+    }
+
+    @Test
+    void testParseMixedTypes() throws JSONParseException {
+        String json = "{\n" +
+                "  \"key1\": true,\n" +
+                "  \"key2\": false,\n" +
+                "  \"key3\": null,\n" +
+                "  \"key4\": \"value\",\n" +
+                "  \"key5\": 101\n" +
+                "}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        Map<String, Object> map = (Map<String, Object>) result;
+        assertEquals(true, map.get("key1"));
+        assertEquals(false, map.get("key2"));
+        assertEquals(null, map.get("key3"));
+        assertEquals("value", map.get("key4"));
+        assertEquals(101, map.get("key5"));
+    }
+
+    @Test
+    void testParseInvalidBoolean() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{\"key\": True}"));
+    }
+
+    @Test
+    void testParseInvalidNull() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{\"key\": Null}"));
+    }
+
+    @Test
+    void testParseInvalidNumber() {
+        assertThrows(JSONParseException.class, () -> parser.parse("{\"key\": 12.}"));
+    }
+
+    @Test
     void testParseNullJson() {
         assertThrows(JSONParseException.class, () -> parser.parse(null));
     }
