@@ -154,6 +154,17 @@ class JSONParserTest {
     }
 
     @Test
+    void testParseRootArray() throws JSONParseException {
+        String json = "[\"value1\", \"value2\"]";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof java.util.List);
+        java.util.List<Object> list = (java.util.List<Object>) result;
+        assertEquals(2, list.size());
+        assertEquals("value1", list.get(0));
+        assertEquals("value2", list.get(1));
+    }
+
+    @Test
     void testParseInvalidBoolean() {
         assertThrows(JSONParseException.class, () -> parser.parse("{\"key\": True}"));
     }

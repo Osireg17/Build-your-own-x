@@ -18,7 +18,8 @@ public class JSONParser {
         FALSE,
         NULL,
         COLON,
-        COMMA
+        COMMA,
+        EOF
     }
 
     private static class Token {
@@ -106,6 +107,7 @@ public class JSONParser {
                     }
                 }
             }
+            tokens.add(new Token(TokenType.EOF, pos));
             return tokens;
         }
 
@@ -202,17 +204,11 @@ public class JSONParser {
         }
 
         Object parse() throws JSONParseException {
-            if (tokens.isEmpty()) {
+            if (tokens.isEmpty() || tokens.get(0).type == TokenType.EOF) {
                 throw new JSONParseException("JSON string cannot be empty");
             }
             
-            // Standard JSON allows object or array at root, but strict mode might require object.
-            // Based on previous implementation, we expect an object.
-            if (peek().type != TokenType.LEFT_BRACE) {
-                throw new JSONParseException("Expected '{'");
-            }
-            
-            Object result = parseObject();
+            Object result = parseValue();
             
             if (!isAtEnd()) {
                 throw new JSONParseException("Unexpected tokens after JSON root");
@@ -249,6 +245,7 @@ public class JSONParser {
                     advance();
                     return null;
                 }
+                case EOF -> throw new JSONParseException("Unexpected end of input");
                 default -> throw new JSONParseException("Unexpected token at position " + token.position);
             }
         }
@@ -306,14 +303,6 @@ public class JSONParser {
         }
 
         private Token peek() {
-            if (isAtEnd()) {
-                // Return a dummy EOF token or handle appropriately. 
-                // However, logic should usually check isAtEnd before peeking if dangerous,
-                // or we return a special EOF token.
-                // For now, let's assume usage is safe or we return last token/null.
-                // Re-using the last token as a safe guard or throwing.
-                return tokens.get(tokens.size() - 1);
-            }
             return tokens.get(current);
         }
 
@@ -323,7 +312,7 @@ public class JSONParser {
         }
 
         private boolean isAtEnd() {
-            return current >= tokens.size();
+            return peek().type == TokenType.EOF;
         }
 
         private Token previous() {
@@ -345,7 +334,7 @@ public class JSONParser {
 
         private Token consume(TokenType type, String message) throws JSONParseException {
             if (check(type)) return advance();
-            throw new JSONParseException(message + " at position " + (isAtEnd() ? "end" : peek().position));
+            throw new JSONParseException(message + " at position " + peek().position);
         }
     }
 
