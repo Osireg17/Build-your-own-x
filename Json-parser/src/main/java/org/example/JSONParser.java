@@ -12,6 +12,7 @@ public class JSONParser {
     }
 
     private static class Token {
+
         final TokenType type;
         final int position;
 
@@ -27,6 +28,7 @@ public class JSONParser {
     }
 
     private static class Lexer {
+
         private final String input;
         private int pos = 0;
         private final int length;
@@ -41,21 +43,17 @@ public class JSONParser {
             while (pos < length) {
                 char current = input.charAt(pos);
                 switch (current) {
-                    case '{':
+                    case '{' -> {
                         tokens.add(new Token(TokenType.LEFT_BRACE, pos));
                         pos++;
-                        break;
-                    case '}':
+                    }
+                    case '}' -> {
                         tokens.add(new Token(TokenType.RIGHT_BRACE, pos));
                         pos++;
-                        break;
-                    case ' ':
-                    case '\t':
-                    case '\n':
-                    case '\r':
+                    }
+                    case ' ', '\t', '\n', '\r' ->
                         pos++; // Skip whitespace
-                        break;
-                    default:
+                    default ->
                         throw new JSONParseException("Unexpected character '" + current + "' at position " + pos);
                 }
             }
@@ -82,7 +80,7 @@ public class JSONParser {
             throw new JSONParseException("JSON string cannot be empty");
         }
 
-        Token first = tokens.getFirst();
+        Token first = tokens.get(0);
         if (first.type == TokenType.LEFT_BRACE) {
             if (tokens.size() > 1 && tokens.get(1).type == TokenType.RIGHT_BRACE) {
                 if (tokens.size() > 2) {
@@ -107,7 +105,7 @@ public class JSONParser {
         try {
             parse(json);
             return true;
-        } catch (Exception e) {
+        } catch (JSONParseException e) {
             return false;
         }
     }
