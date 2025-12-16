@@ -6,6 +6,7 @@
       <list>
         <option value="$PROJECT_DIR$/Json-parser/pom.xml" />
         <option value="$PROJECT_DIR$/wc-tools/pom.xml" />
+        <option value="$PROJECT_DIR$/compression-tool/pom.xml" />
       </list>
     </option>
   </component>

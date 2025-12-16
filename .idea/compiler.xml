@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="Json-parser" />
         <module name="wc-tools" />
+        <module name="compression-tool" />
       </profile>
     </annotationProcessing>
   </component>
