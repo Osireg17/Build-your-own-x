@@ -114,6 +114,57 @@ class JSONParserTest {
     }
 
     @Test
+    void testParseNestedObject() throws JSONParseException {
+        String json = "{\"key\": {\"innerKey\": \"innerValue\"}}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        Map<String, Object> map = (Map<String, Object>) result;
+        assertTrue(map.get("key") instanceof Map);
+        Map<String, Object> innerMap = (Map<String, Object>) map.get("key");
+        assertEquals("innerValue", innerMap.get("innerKey"));
+    }
+
+    @Test
+    void testParseArray() throws JSONParseException {
+        String json = "{\"key\": [1, 2, 3]}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        Map<String, Object> map = (Map<String, Object>) result;
+        assertTrue(map.get("key") instanceof java.util.List);
+        java.util.List<Object> list = (java.util.List<Object>) map.get("key");
+        assertEquals(3, list.size());
+        assertEquals(1, list.get(0));
+        assertEquals(2, list.get(1));
+        assertEquals(3, list.get(2));
+    }
+
+    @Test
+    void testParseMixedArray() throws JSONParseException {
+        String json = "{\"key\": [1, \"string\", true, null, {}]}";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof Map);
+        Map<String, Object> map = (Map<String, Object>) result;
+        java.util.List<Object> list = (java.util.List<Object>) map.get("key");
+        assertEquals(5, list.size());
+        assertEquals(1, list.get(0));
+        assertEquals("string", list.get(1));
+        assertEquals(true, list.get(2));
+        assertEquals(null, list.get(3));
+        assertTrue(list.get(4) instanceof Map);
+    }
+
+    @Test
+    void testParseRootArray() throws JSONParseException {
+        String json = "[\"value1\", \"value2\"]";
+        Object result = parser.parse(json);
+        assertTrue(result instanceof java.util.List);
+        java.util.List<Object> list = (java.util.List<Object>) result;
+        assertEquals(2, list.size());
+        assertEquals("value1", list.get(0));
+        assertEquals("value2", list.get(1));
+    }
+
+    @Test
     void testParseInvalidBoolean() {
         assertThrows(JSONParseException.class, () -> parser.parse("{\"key\": True}"));
     }

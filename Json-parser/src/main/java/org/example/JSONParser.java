@@ -10,13 +10,16 @@ public class JSONParser {
     private enum TokenType {
         LEFT_BRACE,
         RIGHT_BRACE,
+        LEFT_BRACKET,
+        RIGHT_BRACKET,
         STRING,
         NUMBER,
         TRUE,
         FALSE,
         NULL,
         COLON,
-        COMMA
+        COMMA,
+        EOF
     }
 
     private static class Token {
@@ -65,6 +68,14 @@ public class JSONParser {
                         tokens.add(new Token(TokenType.RIGHT_BRACE, pos));
                         pos++;
                     }
+                    case '[' -> {
+                        tokens.add(new Token(TokenType.LEFT_BRACKET, pos));
+                        pos++;
+                    }
+                    case ']' -> {
+                        tokens.add(new Token(TokenType.RIGHT_BRACKET, pos));
+                        pos++;
+                    }
                     case ':' -> {
                         tokens.add(new Token(TokenType.COLON, pos));
                         pos++;
@@ -96,6 +107,7 @@ public class JSONParser {
                     }
                 }
             }
+            tokens.add(new Token(TokenType.EOF, pos));
             return tokens;
         }
 
@@ -183,6 +195,149 @@ public class JSONParser {
         }
     }
 
+    private static class RecursiveParser {
+        private final List<Token> tokens;
+        private int current = 0;
+
+        RecursiveParser(List<Token> tokens) {
+            this.tokens = tokens;
+        }
+
+        Object parse() throws JSONParseException {
+            if (tokens.isEmpty() || tokens.get(0).type == TokenType.EOF) {
+                throw new JSONParseException("JSON string cannot be empty");
+            }
+            
+            Object result = parseValue();
+            
+            if (!isAtEnd()) {
+                throw new JSONParseException("Unexpected tokens after JSON root");
+            }
+            return result;
+        }
+
+        private Object parseValue() throws JSONParseException {
+            Token token = peek();
+            switch (token.type) {
+                case LEFT_BRACE -> {
+                    return parseObject();
+                }
+                case LEFT_BRACKET -> {
+                    return parseArray();
+                }
+                case STRING -> {
+                    advance();
+                    return token.value;
+                }
+                case NUMBER -> {
+                    advance();
+                    return parseNumber(token.value);
+                }
+                case TRUE -> {
+                    advance();
+                    return true;
+                }
+                case FALSE -> {
+                    advance();
+                    return false;
+                }
+                case NULL -> {
+                    advance();
+                    return null;
+                }
+                case EOF -> throw new JSONParseException("Unexpected end of input");
+                default -> throw new JSONParseException("Unexpected token at position " + token.position);
+            }
+        }
+
+        private Map<String, Object> parseObject() throws JSONParseException {
+            consume(TokenType.LEFT_BRACE, "Expected '{'");
+            Map<String, Object> map = new HashMap<>();
+            
+            if (match(TokenType.RIGHT_BRACE)) {
+                return map;
+            }
+
+            while (true) {
+                Token keyToken = consume(TokenType.STRING, "Expected string key");
+                consume(TokenType.COLON, "Expected ':'");
+                Object value = parseValue();
+                map.put(keyToken.value, value);
+
+                if (match(TokenType.RIGHT_BRACE)) {
+                    break;
+                }
+                consume(TokenType.COMMA, "Expected ',' or '}'");
+            }
+            return map;
+        }
+
+        private List<Object> parseArray() throws JSONParseException {
+            consume(TokenType.LEFT_BRACKET, "Expected '['");
+            List<Object> list = new ArrayList<>();
+            
+            if (match(TokenType.RIGHT_BRACKET)) {
+                return list;
+            }
+
+            while (true) {
+                list.add(parseValue());
+                if (match(TokenType.RIGHT_BRACKET)) {
+                    break;
+                }
+                consume(TokenType.COMMA, "Expected ',' or ']'");
+            }
+            return list;
+        }
+        
+        private Object parseNumber(String value) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                try {
+                     return Long.parseLong(value);
+                } catch (NumberFormatException e2) {
+                    return Double.parseDouble(value);
+                }
+            }
+        }
+
+        private Token peek() {
+            return tokens.get(current);
+        }
+
+        private Token advance() {
+            if (!isAtEnd()) current++;
+            return previous();
+        }
+
+        private boolean isAtEnd() {
+            return peek().type == TokenType.EOF;
+        }
+
+        private Token previous() {
+            return tokens.get(current - 1);
+        }
+
+        private boolean match(TokenType type) {
+            if (check(type)) {
+                advance();
+                return true;
+            }
+            return false;
+        }
+
+        private boolean check(TokenType type) {
+            if (isAtEnd()) return false;
+            return peek().type == type;
+        }
+
+        private Token consume(TokenType type, String message) throws JSONParseException {
+            if (check(type)) return advance();
+            throw new JSONParseException(message + " at position " + peek().position);
+        }
+    }
+
     /**
      * Parses a JSON string and returns the parsed result.
      *
@@ -198,89 +353,8 @@ public class JSONParser {
         Lexer lexer = new Lexer(json);
         List<Token> tokens = lexer.tokenize();
 
-        if (tokens.isEmpty()) {
-            throw new JSONParseException("JSON string cannot be empty");
-        }
-
-        Token first = tokens.get(0);
-        if (first.type != TokenType.LEFT_BRACE) {
-            throw new JSONParseException("Expected '{'");
-        }
-
-        Map<String, Object> object = new HashMap<>();
-        int index = 1;
-
-        if (index < tokens.size() && tokens.get(index).type == TokenType.RIGHT_BRACE) {
-            if (index + 1 < tokens.size()) {
-                 throw new JSONParseException("Unexpected tokens after JSON object");
-            }
-            return object; // Empty object
-        }
-
-        while (index < tokens.size()) {
-            Token token = tokens.get(index);
-
-            if (token.type != TokenType.STRING) {
-                throw new JSONParseException("Expected string key at position " + token.position);
-            }
-            String key = token.value;
-            index++;
-
-            if (index >= tokens.size() || tokens.get(index).type != TokenType.COLON) {
-                 throw new JSONParseException("Expected ':' after key at position " + (index < tokens.size() ? tokens.get(index).position : "end"));
-            }
-            index++;
-
-            if (index >= tokens.size()) {
-                throw new JSONParseException("Expected value at position " + "end");
-            }
-            Token valueToken = tokens.get(index);
-            Object value;
-            switch (valueToken.type) {
-                case STRING -> value = valueToken.value;
-                case NUMBER -> {
-                    try {
-                        value = Integer.parseInt(valueToken.value);
-                    } catch (NumberFormatException e) {
-                        try {
-                             value = Long.parseLong(valueToken.value);
-                        } catch (NumberFormatException e2) {
-                            value = Double.parseDouble(valueToken.value);
-                        }
-                    }
-                }
-                case TRUE -> value = true;
-                case FALSE -> value = false;
-                case NULL -> value = null;
-                default -> throw new JSONParseException("Expected value at position " + valueToken.position);
-            }
-            object.put(key, value);
-            index++;
-
-            if (index >= tokens.size()) {
-                 throw new JSONParseException("Expected '}' or ',' at position " + "end");
-            }
-
-            Token next = tokens.get(index);
-            if (next.type == TokenType.RIGHT_BRACE) {
-                index++;
-                if (index < tokens.size()) {
-                     throw new JSONParseException("Unexpected tokens after JSON object");
-                }
-                return object;
-            } else if (next.type == TokenType.COMMA) {
-                index++;
-                // Continue loop for next key-value pair
-                // Check for trailing comma
-                if (index < tokens.size() && tokens.get(index).type == TokenType.RIGHT_BRACE) {
-                    throw new JSONParseException("Trailing comma at position " + next.position);
-                }
-            } else {
-                 throw new JSONParseException("Expected '}' or ',' at position " + next.position);
-            }
-        }
-
-        throw new JSONParseException("Unexpected end of input");
+        RecursiveParser parser = new RecursiveParser(tokens);
+        return parser.parse();
     }
 
     /**
