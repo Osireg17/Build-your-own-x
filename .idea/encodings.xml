@@ -3,6 +3,8 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/Json-parser/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Json-parser/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/compression-tool/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/compression-tool/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/wc-tools/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/wc-tools/src/main/resources" charset="UTF-8" />
   </component>
