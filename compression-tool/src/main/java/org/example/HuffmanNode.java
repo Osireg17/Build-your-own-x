@@ -1,8 +1,8 @@
 package org.example;
 
 public class HuffmanNode implements Comparable<HuffmanNode> {
-    private final Character character;
-    private final long frequency;
+    final Character character;
+    final long frequency;
     HuffmanNode left;
     HuffmanNode right;
 

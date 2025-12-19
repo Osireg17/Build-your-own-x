@@ -4,28 +4,24 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class HuffmanTreeBuilderTest {
 
     @Test
     void itThrowsOnNullFrequencyMap() {
         HuffmanTreeBuilder builder = new HuffmanTreeBuilder();
 
-        try {
-            builder.buildTree(null);
-        } catch (NullPointerException e) {
-            assert e.getMessage().equals("Frequency map cannot be null");
-        }
+        NullPointerException e = assertThrows(NullPointerException.class, () -> builder.buildTree(null));
+        assertEquals("Frequency map cannot be null", e.getMessage());
     }
 
     @Test
     void itThrowsOnEmptyFrequencyMap() {
         HuffmanTreeBuilder builder = new HuffmanTreeBuilder();
 
-        try {
-            builder.buildTree(Map.of());
-        } catch (IllegalArgumentException e) {
-            assert e.getMessage().equals("Frequency map cannot be empty");
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> builder.buildTree(Map.of()));
+        assertEquals("Frequency map cannot be empty", e.getMessage());
     }
 
     @Test
@@ -35,9 +31,12 @@ public class HuffmanTreeBuilderTest {
 
         HuffmanNode root = builder.buildTree(frequencyMap);
 
-        assert root.isLeaf();
-        assert root.getCharacter() == 'a';
-        assert root.getFrequency() == 5L;
+        HuffmanNode expectedNode = new HuffmanNode('a', 5L);
+        HuffmanNode actualNode = root;
+
+        assertEquals(expectedNode.getCharacter(), actualNode.getCharacter());
+        assertEquals(expectedNode.getFrequency(), actualNode.getFrequency());
+        assertEquals(expectedNode.isLeaf(), actualNode.isLeaf());
 
     }
 
@@ -55,8 +54,8 @@ public class HuffmanTreeBuilderTest {
 
         HuffmanNode root = builder.buildTree(frequencyMap);
 
-        assert root.getFrequency() == 100L; // Total frequency
-        assert !root.isLeaf();
+        assertEquals(100L, root.getFrequency()); // Total frequency
+        assertFalse(root.isLeaf());
     }
 
     @Test
@@ -70,7 +69,7 @@ public class HuffmanTreeBuilderTest {
 
         HuffmanNode root = builder.buildTree(frequencyMap);
 
-        assert root.getFrequency() == 11L; // Total frequency
-        assert !root.isLeaf();
+        assertEquals(11L, root.getFrequency()); // Total frequency
+        assertFalse(root.isLeaf());
     }
 }

@@ -27,7 +27,6 @@ public class HuffmanTreeBuilder {
             HuffmanNode left = pq.poll();
             HuffmanNode right = pq.poll();
 
-            assert right != null;
             HuffmanNode parent = new HuffmanNode(left, right);
             pq.add(parent);
         }
