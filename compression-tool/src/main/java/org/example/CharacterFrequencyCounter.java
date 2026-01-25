@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.LongAdder;
 
 public class CharacterFrequencyCounter {
+
     public Map<Character, Long> count(Path path) throws IOException {
         Objects.requireNonNull(path, "path");
         if (!Files.exists(path) || !Files.isRegularFile(path) || !Files.isReadable(path)) {
