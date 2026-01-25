@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Objects;
 
 public class Main {
+
     public static void main(String[] args) {
         if (args.length != 1) {
             System.err.println("Usage: java -jar compression-tool.jar <path-to-text-file>");
@@ -14,10 +16,15 @@ public class Main {
 
         Path path = Path.of(args[0]);
         CharacterFrequencyCounter counter = new CharacterFrequencyCounter();
+        HuffmanTreeBuilder treeBuilder = new HuffmanTreeBuilder();
+        HuffmanCodeGenerator codeGenerator = new HuffmanCodeGenerator();
 
         try {
             Map<Character, Long> frequencies = counter.count(path);
-            logFrequencies(frequencies);
+            HuffmanNode root = treeBuilder.buildTree(frequencies);
+            Map<Character, String> codes = codeGenerator.generateCodes(root);
+
+            logCodes(frequencies, codes);
         } catch (IllegalArgumentException e) {
             System.err.println("Error: " + e.getMessage());
             System.exit(1);
@@ -27,13 +34,16 @@ public class Main {
         }
     }
 
-    private static void logFrequencies(Map<Character, Long> frequencies) {
+    private static void logCodes(Map<Character, Long> frequencies, Map<Character, String> codes) {
         frequencies.entrySet().stream()
                 .sorted(Map.Entry.<Character, Long>comparingByValue(Comparator.reverseOrder())
                         .thenComparing(Map.Entry.comparingByKey()))
                 .forEach(entry -> {
-                    String printable = printableChar(entry.getKey());
-                    System.out.println(printable + " : " + entry.getValue());
+                    Character key = entry.getKey();
+                    String printable = printableChar(key);
+                    Long freq = entry.getValue();
+                    String code = codes.get(key);
+                    System.out.printf("%s : %d : %s%n", printable, freq, Objects.toString(code, "(missing)"));
                 });
     }
 
