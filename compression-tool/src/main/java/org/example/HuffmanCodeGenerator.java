@@ -1,25 +1,26 @@
 package org.example;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class HuffmanCodeGenerator {
 
     public Map<Character, String> generateCodes(HuffmanNode root) {
-        Map<Character, String> codeMap = new HashMap<>();
-
         if (root == null) {
-            return codeMap;
+            return Collections.emptyMap();
         }
+
+        Map<Character, String> codeMap = new HashMap<>();
 
         // Special case: Only one unique character in the entire text
         if (root.isLeaf()) {
             codeMap.put(root.getCharacter(), "0");
-            return codeMap;
+            return Map.copyOf(codeMap);
         }
 
         generate(root, "", codeMap);
-        return codeMap;
+        return Map.copyOf(codeMap);
     }
 
     private void generate(HuffmanNode node, String code, Map<Character, String> codeMap) {
