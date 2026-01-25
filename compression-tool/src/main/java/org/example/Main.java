@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Objects;
 
 public class Main {
 
@@ -42,7 +43,7 @@ public class Main {
                     String printable = printableChar(key);
                     Long freq = entry.getValue();
                     String code = codes.get(key);
-                    System.out.printf("%s : %d : %s%n", printable, freq, code);
+                    System.out.printf("%s : %d : %s%n", printable, freq, Objects.toString(code, "(missing)"));
                 });
     }
 
