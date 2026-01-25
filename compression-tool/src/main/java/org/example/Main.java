@@ -9,18 +9,26 @@ import java.util.Objects;
 public class Main {
 
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.err.println("Usage: java -jar compression-tool.jar <path-to-text-file>");
+        if (args.length < 1 || args.length > 2) {
+            System.err.println("Usage: java -jar compression-tool.jar <path-to-text-file> [output-file]");
             System.exit(1);
         }
 
-        Path path = Path.of(args[0]);
+        Path inputPath = Path.of(args[0]);
+        Path outputPath = args.length == 2 ? Path.of(args[1]) : Path.of(args[0] + ".compressed");
+
+        CompressionEngine engine = new CompressionEngine();
         CharacterFrequencyCounter counter = new CharacterFrequencyCounter();
         HuffmanTreeBuilder treeBuilder = new HuffmanTreeBuilder();
         HuffmanCodeGenerator codeGenerator = new HuffmanCodeGenerator();
 
         try {
-            Map<Character, Long> frequencies = counter.count(path);
+            // Compress the file
+            engine.compress(inputPath, outputPath);
+            System.out.println("Compression complete. Output: " + outputPath);
+
+            // Log statistics
+            Map<Character, Long> frequencies = counter.count(inputPath);
             HuffmanNode root = treeBuilder.buildTree(frequencies);
             Map<Character, String> codes = codeGenerator.generateCodes(root);
 
@@ -29,7 +37,7 @@ public class Main {
             System.err.println("Error: " + e.getMessage());
             System.exit(1);
         } catch (IOException e) {
-            System.err.println("Failed to read file: " + e.getMessage());
+            System.err.println("Failed to compress file: " + e.getMessage());
             System.exit(1);
         }
     }
