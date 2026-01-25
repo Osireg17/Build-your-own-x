@@ -39,11 +39,10 @@ class CompressionEngineTest {
         engine.compress(inputFile, outputFile);
 
         // Verify header starts with magic number
-        DataInputStream dis = new DataInputStream(Files.newInputStream(outputFile));
-        int magic = dis.readInt();
-        dis.close();
-
-        assertEquals(0xC0DE, magic, "File should start with magic number");
+        try (DataInputStream dis = new DataInputStream(Files.newInputStream(outputFile))) {
+            int magic = dis.readInt();
+            assertEquals(0xC0DE, magic, "File should start with magic number");
+        }
     }
 
     @Test
@@ -114,15 +113,15 @@ class CompressionEngineTest {
         assertTrue(Files.exists(outputFile), "Output file should be created");
 
         // Verify header structure
-        DataInputStream dis = new DataInputStream(Files.newInputStream(outputFile));
-        int magic = dis.readInt();
-        byte version = dis.readByte();
-        int charCount = dis.readInt();
-        dis.close();
+        try (DataInputStream dis = new DataInputStream(Files.newInputStream(outputFile))) {
+            int magic = dis.readInt();
+            byte version = dis.readByte();
+            int charCount = dis.readInt();
 
-        assertEquals(0xC0DE, magic);
-        assertEquals(1, version);
-        assertTrue(charCount > 0, "Should have character frequencies");
+            assertEquals(0xC0DE, magic);
+            assertEquals(1, version);
+            assertTrue(charCount > 0, "Should have character frequencies");
+        }
     }
 
     @Test
@@ -136,11 +135,10 @@ class CompressionEngineTest {
         engine.compress(inputFile, outputFile);
 
         assertTrue(Files.exists(outputFile), "Output file should be created");
-        DataInputStream dis = new DataInputStream(Files.newInputStream(outputFile));
-        int magic = dis.readInt();
-        dis.close();
-
-        assertEquals(0xC0DE, magic, "Magic number should be correct");
+        try (DataInputStream dis = new DataInputStream(Files.newInputStream(outputFile))) {
+            int magic = dis.readInt();
+            assertEquals(0xC0DE, magic, "Magic number should be correct");
+        }
     }
 
     @Test

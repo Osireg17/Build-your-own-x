@@ -1,5 +1,6 @@
 package org.example;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -158,13 +159,5 @@ class HeaderWriterTest {
         int charCount = dis.readInt();
 
         assertEquals(0, charCount, "Character count should be 0 for empty map");
-    }
-}
-
-// Helper class for reading byte arrays
-class ByteArrayInputStream extends java.io.ByteArrayInputStream {
-
-    public ByteArrayInputStream(byte[] buf) {
-        super(buf);
     }
 }

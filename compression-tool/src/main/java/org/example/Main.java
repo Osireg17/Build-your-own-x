@@ -18,21 +18,13 @@ public class Main {
         Path outputPath = args.length == 2 ? Path.of(args[1]) : Path.of(args[0] + ".compressed");
 
         CompressionEngine engine = new CompressionEngine();
-        CharacterFrequencyCounter counter = new CharacterFrequencyCounter();
-        HuffmanTreeBuilder treeBuilder = new HuffmanTreeBuilder();
-        HuffmanCodeGenerator codeGenerator = new HuffmanCodeGenerator();
 
         try {
             // Compress the file
-            engine.compress(inputPath, outputPath);
+            CompressionEngine.CompressionStats stats = engine.compressWithStats(inputPath, outputPath);
             System.out.println("Compression complete. Output: " + outputPath);
 
-            // Log statistics
-            Map<Character, Long> frequencies = counter.count(inputPath);
-            HuffmanNode root = treeBuilder.buildTree(frequencies);
-            Map<Character, String> codes = codeGenerator.generateCodes(root);
-
-            logCodes(frequencies, codes);
+            logCodes(stats.frequencies(), stats.codes());
         } catch (IllegalArgumentException e) {
             System.err.println("Error: " + e.getMessage());
             System.exit(1);
