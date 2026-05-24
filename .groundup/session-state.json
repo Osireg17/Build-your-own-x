@@ -1,0 +1,13 @@
+{
+  "mode": "implement",
+  "task": "Build a basic concurrent web server in Java",
+  "phase": "per_file_loop",
+  "current_file": "webserver/src/main/java/org/example/Main.java",
+  "files": [
+    { "path": "webserver/src/main/java/org/example/Main.java", "status": "pseudocode_written" }
+  ],
+  "skipped_gates": [],
+  "flow_diagram": "ServerSocket → accept → spawn virtual thread → read bytes → parse request line → resolve absolute path → 403 if outside webRoot → 404 if not found → read file → send response → close socket",
+  "scope_file": null,
+  "updated_at": "2026-05-24T00:00:00Z"
+}
