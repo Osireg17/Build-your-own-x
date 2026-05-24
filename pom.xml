@@ -16,6 +16,7 @@
         <module>compression-tool</module>
         <module>Json-parser</module>
         <module>wc-tools</module>
+        <module>webserver</module>
     </modules>
 
 </project>
