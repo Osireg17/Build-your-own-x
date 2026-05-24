@@ -10,7 +10,15 @@ public class Main {
 
     public static void main(String[] args) {
         Path webRoot = Path.of(args.length > 1 ? args[1] : "./www").toAbsolutePath().normalize();
-        int port = args.length > 0 ? Integer.parseInt(args[0]) : 8080;
+        int port = 8080;
+        if (args.length > 0) {
+            try {
+                port = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid port: " + args[0]);
+                return;
+            }
+        }
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server started on port " + port + ", serving from " + webRoot);
             while (true) {
@@ -27,7 +35,7 @@ public class Main {
 
     }
 
-    static void handleConnection(Socket socket, Path webRoot) {
+    public static void handleConnection(Socket socket, Path webRoot) {
         String firstLine;
         try {
             java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
@@ -37,7 +45,7 @@ public class Main {
             return;
         }
 
-        if (firstLine.isBlank()) {
+        if (firstLine == null || firstLine.isBlank()) {
             sendErrorResponse(socket, 400, "Bad Request", "Request line is missing");
             return;
         }
@@ -81,7 +89,7 @@ public class Main {
         }
     }
 
-    static void sendErrorResponse(Socket socket, int statusCode, String statusText, String body) {
+    public static void sendErrorResponse(Socket socket, int statusCode, String statusText, String body) {
         String formattedResponse = "HTTP/1.1 " + statusCode + " " + statusText + "\r\n"
                 + "Content-Type: text/plain\r\n"
                 + "\r\n"
@@ -90,12 +98,10 @@ public class Main {
         try {
             socket.getOutputStream().write(formattedResponse.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            System.err.println("Failed to send error response: " + e.getMessage());
         } finally {
             try {
                 socket.close();
             } catch (IOException e) {
-                System.err.println("Failed to close socket: " + e.getMessage());
             }
         }
     }

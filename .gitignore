@@ -22,6 +22,11 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.properties
 
+# Eclipse
+.classpath
+.project
+.settings/
+
 # Java Class Files
 *.class
 
