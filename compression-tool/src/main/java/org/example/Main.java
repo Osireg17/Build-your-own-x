@@ -2,34 +2,64 @@ package org.example;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 
+import org.example.CompressionEngine.CompressionStats;
+
 public class Main {
 
     public static void main(String[] args) {
-        if (args.length < 1 || args.length > 2) {
-            System.err.println("Usage: java -jar compression-tool.jar <path-to-text-file> [output-file]");
+        if (args.length < 1 || args.length > 3) {
+            System.err.println("Usage: java -jar compression-tool.jar [-d] <inputPath> [outputPath]");
             System.exit(1);
         }
 
-        Path inputPath = Path.of(args[0]);
-        Path outputPath = args.length == 2 ? Path.of(args[1]) : Path.of(args[0] + ".compressed");
+        boolean decompress = "-d".equals(args[0]);
+        int inputIndex = decompress ? 1 : 0;
+        int maxArgs = decompress ? 3 : 2;
 
-        CompressionEngine engine = new CompressionEngine();
+        if (args.length < inputIndex + 1 || args.length > maxArgs) {
+            if (decompress) {
+                System.err.println("Usage for decompression: java -jar compression-tool.jar -d <inputPath> [outputPath]");
+            } else {
+                System.err.println("Usage for compression: java -jar compression-tool.jar <inputPath> [outputPath]");
+            }
+            System.exit(1);
+        }
+
+        String inputPathStr = args[inputIndex];
+        String outputPathStr;
+        if (args.length > inputIndex + 1) {
+            outputPathStr = args[inputIndex + 1];
+        } else {
+            if (decompress) {
+                outputPathStr = (inputPathStr.endsWith(".compressed")
+                        ? inputPathStr.substring(0, inputPathStr.length() - ".compressed".length())
+                        : inputPathStr + ".decompressed");
+            } else {
+                outputPathStr = inputPathStr + ".compressed";
+            }
+        }
+
+        Path inputPath = Paths.get(inputPathStr);
+        Path outputPath = Paths.get(outputPathStr);
 
         try {
-            // Compress the file
-            CompressionEngine.CompressionStats stats = engine.compressWithStats(inputPath, outputPath);
-            System.out.println("Compression complete. Output: " + outputPath);
-
-            logCodes(stats.frequencies(), stats.codes());
-        } catch (IllegalArgumentException e) {
+            if (decompress) {
+                DecompressionEngine decompressor = new DecompressionEngine();
+                decompressor.decompress(inputPath, outputPath);
+                System.out.println("Decompression successful: " + outputPath);
+            } else {
+                CompressionEngine compressor = new CompressionEngine();
+                CompressionStats stats = compressor.compressWithStats(inputPath, outputPath);
+                System.out.println("Compression successful: " + outputPath);
+                logCodes(stats.frequencies(), stats.codes());
+            }
+        } catch (IllegalArgumentException | IOException e) {
             System.err.println("Error: " + e.getMessage());
-            System.exit(1);
-        } catch (IOException e) {
-            System.err.println("Failed to compress file: " + e.getMessage());
             System.exit(1);
         }
     }
